@@ -230,18 +230,13 @@ public class ChessBoard extends GameBoard {
         
         List<Move> possibleMoves = new ArrayList<Move>() ;
 
-        int startCol = 0 ;
-        int startRow = 0 ;
-        int endCol = 0 ;
-        int endRow = 0 ;
         int cellRow = seedCell.row ;
         int cellCol = seedCell.col ;
 
-        // factorForColor determines the direction of scan. If the pieceColor is
+        // yStepDir determines the direction of scan. If the pieceColor is
         // for the side which is in the bottom part of the board, then the scan
         // is upward, else it is downwards ( -1 ).
-        
-        int factorForColor = ( seedCell.pieceColor == topColor ) ? 1 : -1 ;
+        int yStepDir = ( seedCell.pieceColor == topColor ) ? 1 : -1 ;
         
         int[][] ownLocation = pieceLocations[seedCell.pieceColor] ;
         int[][] opponentLocation = pieceLocations[getEnemyPerspective( seedCell.pieceColor )] ;
@@ -250,80 +245,16 @@ public class ChessBoard extends GameBoard {
         if( seedCell.piece == EMPTY ) return possibleMoves ;
 
         switch( seedCell.piece ){
-            case PAWN: {
-                // Base line is the row from where the pawn starts its life. If
-                // its upward movement then baseline is row1 else its row6.
-                int baseLine = ( factorForColor == 1 ) ? 1 : 6 ;
-                boolean pieceOnBaseLine = ( ( ( factorForColor == 1 ) && 
-                                              ( cellRow == baseLine ) ) || 
-                                            ( ( factorForColor == -1 ) && 
-                                              ( cellRow == baseLine ) ) ) ;
+            case PAWN:
+                return getMovesForPawn( cellRow, cellCol,
+                                        yStepDir, 
+                                        ownLocation, opponentLocation ) ;
+            case KNIGHT:
+                return getMovesForKnight( cellRow, cellCol, ownLocation ) ;
 
-                // If the pawn is in the last row for either color, no moves
-                // possible.
-                if( cellRow > 6 || cellRow < 1 ) return possibleMoves ;
-
-                startCol = ( ( cellCol % 8 ) == 0 ) ? cellCol : ( cellCol - 1 ) ;
-                endCol = ( ( cellCol % 8 ) == 7 ) ? cellCol : ( cellCol + 1 ) ;
-
-                for( int i = startCol ; i <= endCol ; i++ ) {
-                    if( ( i == cellCol ) ) {
-                        if( ( ownLocation[cellRow + factorForColor][i] == 0 )
-                                && 
-                            ( opponentLocation[cellRow + factorForColor][i] == 0 ) ) {
-                            
-                            possibleMoves.add( getMove( cellRow, cellCol, 
-                                                        ( cellRow + factorForColor ), i ) ) ;
-                        }
-                    }
-                    else if( opponentLocation[cellRow + factorForColor][i] == 1 ) {
-                        possibleMoves.add( getMove( cellRow, cellCol,
-                                                    ( cellRow + factorForColor ), i ) ) ;
-                    }
-                }
-
-                if( ( pieceOnBaseLine )
-                        && ( ownLocation[cellRow + factorForColor][cellCol] == 0 )
-                        && ( ownLocation[cellRow + 2 * factorForColor][cellCol] == 0 )
-                        && ( opponentLocation[cellRow + factorForColor][cellCol] == 0 )
-                        && ( opponentLocation[cellRow + 2 * factorForColor][cellCol] == 0 ) ) {
-                    
-                    possibleMoves.add( getMove( cellRow, cellCol,
-                                                ( cellRow + 2 * factorForColor ), cellCol ) ) ;
-                }
-
-                break ;
-            }
-
-            // Compute the possible moves if the piece at the seed cell location
-            // is a KNIGHT.
-            case KNIGHT: {
+            case KING:
+                return getMovesForKing( cellRow, cellCol, ownLocation ) ;
                 
-                startCol = Math.max( 0, ( cellCol - 2 ) ) ;
-                endCol = Math.min( 7, ( cellCol + 2 ) ) ;
-                startRow = Math.max( 0, ( cellRow - 2 ) ) ;
-                endRow = Math.min( 7, ( cellRow + 2 ) ) ;
-
-                for( int col = startCol ; col <= endCol ; col++ ) {
-                    for( int row = startRow ; row <= endRow ; row++ ) {
-                        if( ( Math.abs( col - cellCol ) == 2 )
-                                && ( Math.abs( row - cellRow ) == 1 )
-                                && ( ownLocation[row][col] == 0 ) ) {
-                            
-                            possibleMoves.add( getMove( cellRow, cellCol, row, col ) ) ;
-                        }
-                        else if( ( Math.abs( col - cellCol ) == 1 )
-                                && ( Math.abs( row - cellRow ) == 2 )
-                                && ( ownLocation[row][col] == 0 ) ) {
-                            
-                            possibleMoves.add( getMove( cellRow, cellCol, row, col ) ) ;
-                        }
-                    }
-                }
-
-                break ;
-            }
-
             // Compute the possible moves if the piece at the seed cell location
             // is a ROOK
             case ROOK:
@@ -396,25 +327,114 @@ public class ChessBoard extends GameBoard {
                 break ;
             }
 
-            // The slothy big boss.
-            case KING: {
-                startCol = Math.max( 0, ( cellCol - 1 ) ) ;
-                endCol = Math.min( 7, ( cellCol + 1 ) ) ;
-                startRow = Math.max( 0, ( cellRow - 1 ) ) ;
-                endRow = Math.min( 7, ( cellRow + 1 ) ) ;
-
-                for( int col = startCol ; col <= endCol ; col++ )
-                    for( int row = startRow ; row <= endRow ; row++ ) {
-                        if( ( Math.abs( col - cellCol ) == 1 )
-                                || ( Math.abs( row - cellRow ) == 1 ) ) if( ownLocation[row][col] == 0 ) 
-                                    possibleMoves .add( getMove( cellRow, cellCol, row, col ) ) ;
-                    }
-
-                break ;
-            }
         }
 
         return possibleMoves ;
+    }
+
+    private List<Move> getMovesForKing( int cellRow, int cellCol, int[][] ownLocation ) {
+        
+        List<Move> moves = new ArrayList<Move>() ;
+        
+        int startCol = Math.max( 0, ( cellCol - 1 ) ) ;
+        int endCol   = Math.min( 7, ( cellCol + 1 ) ) ;
+        int startRow = Math.max( 0, ( cellRow - 1 ) ) ;
+        int endRow   = Math.min( 7, ( cellRow + 1 ) ) ;
+
+        for( int col = startCol ; col <= endCol ; col++ ) {
+            for( int row = startRow ; row <= endRow ; row++ ) {
+                
+                if( ownLocation[row][col] == 0 ) {
+                    if( ( Math.abs( col - cellCol ) == 1 ) || 
+                        ( Math.abs( row - cellRow ) == 1 ) ) {
+                        
+                        moves.add( getMove( cellRow, cellCol, row, col ) ) ;
+                    }
+                }
+            }
+        }
+        
+        return moves ;
+    }
+
+    private List<Move> getMovesForKnight( int cellRow, int cellCol, 
+                                          int[][] ownLocation ) {
+        
+        int startCol = Math.max( 0, ( cellCol - 2 ) ) ;
+        int startRow = Math.min( 7, ( cellCol + 2 ) ) ;
+        int endCol   = Math.max( 0, ( cellRow - 2 ) ) ;
+        int endRow   = Math.min( 7, ( cellRow + 2 ) ) ;
+        
+        List<Move> moves = new ArrayList<Move>() ;
+        
+        for( int col = startCol ; col <= endCol ; col++ ) {
+            for( int row = startRow ; row <= endRow ; row++ ) {
+                
+                if( ownLocation[row][col] == 0 ) {
+                    
+                    if( ( Math.abs( col - cellCol ) == 2 ) && 
+                        ( Math.abs( row - cellRow ) == 1 ) ) {
+                        
+                        moves.add( getMove( cellRow, cellCol, row, col ) ) ;
+                    }
+                    else if( ( Math.abs( col - cellCol ) == 1 ) && 
+                             ( Math.abs( row - cellRow ) == 2 ) ) {
+                        
+                        moves.add( getMove( cellRow, cellCol, row, col ) ) ;
+                    }
+                }
+            }
+        }
+        
+        return moves ;
+    }
+
+    private List<Move> getMovesForPawn( int cellRow, int cellCol, 
+                                        int yStepDir, 
+                                        int[][] ownLocation,
+                                        int[][] opponentLocation ) {
+        
+        List<Move> moves = new ArrayList<Move>() ;
+        int startCol, endCol ;
+        
+        // Base line is the row from where the pawn starts its life. If
+        // its upward movement then baseline is row1 else its row6.
+        int baseLine = ( yStepDir == 1 ) ? 1 : 6 ;
+        boolean pieceOnBaseLine = ( yStepDir ==  1 && cellRow == baseLine ) ||
+                                  ( yStepDir == -1 && cellRow == baseLine ) ;
+
+        // If the pawn is in the last row for either color, no moves possible
+        if( cellRow > 6 || cellRow < 1 ) return moves ;
+
+        startCol = ( ( cellCol % 8 ) == 0 ) ? cellCol : ( cellCol - 1 ) ;
+        endCol   = ( ( cellCol % 8 ) == 7 ) ? cellCol : ( cellCol + 1 ) ;
+
+        for( int col = startCol ; col <= endCol ; col++ ) {
+            if( ( col == cellCol ) ) {
+                if( ( ownLocation[cellRow + yStepDir][col] == 0 ) &&
+                    ( opponentLocation[cellRow + yStepDir][col] == 0 ) ) {
+                    
+                    moves.add( getMove( cellRow, cellCol, 
+                                       (cellRow + yStepDir), col ) ) ;
+                }
+            }
+            else if( opponentLocation[cellRow + yStepDir][col] == 1 ) {
+                moves.add( getMove( cellRow, cellCol,
+                                    (cellRow + yStepDir), col ) ) ;
+            }
+        }
+
+        if( ( pieceOnBaseLine )
+                && ( ownLocation[cellRow + yStepDir][cellCol] == 0 )
+                && ( ownLocation[cellRow + 2 * yStepDir][cellCol] == 0 )
+                && ( opponentLocation[cellRow + yStepDir][cellCol] == 0 )
+                && ( opponentLocation[cellRow + 2 * yStepDir][cellCol] == 0 ) ) {
+            
+            moves.add( getMove( cellRow, cellCol,
+                                (cellRow + 2*yStepDir), cellCol ) ) ;
+        }
+        
+        return moves ;
     }
 
     private Move getMove( int cellRow, int cellCol, int row, int col ) {
@@ -433,75 +453,157 @@ public class ChessBoard extends GameBoard {
     }
 
     public boolean isValidMove( Move move ) {
+        
         ChessMove mv = (ChessMove) move ;
 
+        if( checkBaseMoveValidity( mv ) ) {
+            switch( mv.srcPiece ){
+                case BISHOP:
+                    return isValidMoveForBishop( mv ) ;
+                    
+                case ROOK:
+                    return isValidMoveForRook( mv ) ;
+                    
+                case KNIGHT:
+                    return isValidMoveForKnight( mv ) ;
+                    
+                case QUEEN:
+                    return isValidMoveForQueen( mv ) ;
+                    
+                case KING:
+                    return isValidMoveForKing( mv ) ;
+                    
+                case PAWN:
+                    return isValidMoveForPawn( mv ) ;
+            }
+        }
+        
+        return false ;
+    }
+
+    private boolean checkBaseMoveValidity( ChessMove mv ) {
+        
         // If the destination cell is not empty and if there is a piece of the
         // same colour, then the move is invalid.
-        if( mv.destPiece != EMPTY ) if( mv.destPieceColor == mv.srcPieceColor ) return false ;
+        if( mv.destPiece != EMPTY ) {
+            if( mv.destPieceColor == mv.srcPieceColor ) {
+                return false ;
+            }
+        }
 
-        // A pirce can't be moved onto itself.
-        if( ( mv.destCol == mv.srcCol ) && ( mv.srcRow == mv.destRow ) ) return false ;
+        // A piece can't be moved onto itself.
+        if( ( mv.destCol == mv.srcCol ) && 
+            ( mv.srcRow == mv.destRow ) ) {
+            return false ;
+        }
+        
+        return true ;
+    }
 
-        switch( mv.srcPiece ){
-            case BISHOP:
-                if( Math.abs( mv.destRow - mv.srcRow ) == Math.abs( mv.destCol
-                        - mv.srcCol ) ) if( isPathClear( mv ) ) return true ;
+    private boolean isValidMoveForPawn( ChessMove mv ) {
+        
+        int pawnMvDir = ( mv.srcPieceColor == topColor ) ? 1 : -1 ;
+        int opponentColor = getEnemyPerspective( mv.srcPieceColor ) ;
+        int baseLine = ( pawnMvDir == 1 ) ? 1 : 6 ;
 
-                break ;
+        if( mv.destCol == mv.srcCol ) 
+            if( ( mv.destRow - mv.srcRow ) == ( pawnMvDir * 1 ) ) 
+                if( mv.destPiece == EMPTY ) return true ;
 
-            case ROOK:
-                if( ( mv.destCol == mv.srcCol ) || ( mv.destRow == mv.srcRow ) ) if( isPathClear( mv ) ) return true ;
+        if( ( mv.destRow - mv.srcRow ) == ( pawnMvDir * 1 ) ) 
+            if( Math.abs( mv.destCol - mv.srcCol ) == 1 ) 
+                if( ( mv.destPiece != EMPTY ) && ( mv.destPieceColor == opponentColor ) ) 
+                    return true ;
 
-                break ;
+        if( mv.destCol == mv.srcCol ) 
+            if( ( mv.destRow - mv.srcRow ) == ( pawnMvDir * 2 ) ) 
+                if( mv.srcRow == baseLine ) 
+                    if( mv.destPiece == EMPTY ) 
+                        if( isPathClear( mv ) ) 
+                            return true ;
+        
+        return false ;
+    }
 
-            case KNIGHT:
-                if( Math.abs( mv.destRow - mv.srcRow ) == 1 ) if( Math
-                        .abs( mv.destCol - mv.srcCol ) == 2 ) return true ;
+    private boolean isValidMoveForKing( ChessMove mv ) {
+        
+        int colDist = Math.abs( mv.destCol - mv.srcCol ) ; 
+        int rowDist = Math.abs( mv.destRow - mv.srcRow ) ;
+        
+        if( ( colDist == 1 ) && ( rowDist <= 1 ) ) return true ;
+        if( ( rowDist == 1 ) && ( colDist <= 1 ) ) return true ;
+        
+        return false ;
+    }
 
-                if( Math.abs( mv.destCol - mv.srcCol ) == 1 ) if( Math
-                        .abs( mv.destRow - mv.srcRow ) == 2 ) return true ;
-                break ;
+    private boolean isValidMoveForQueen( ChessMove mv ) {
+        
+        boolean pathIsDiagonal = Math.abs( mv.destRow - mv.srcRow ) == 
+                                 Math.abs( mv.destCol - mv.srcCol ) ;
+        
+        boolean pathIsStraight = ( mv.destCol == mv.srcCol ) || 
+                                 ( mv.destRow == mv.srcRow ) ; 
+        
+        if( pathIsDiagonal || pathIsStraight ) {
+            if( isPathClear( mv ) ) {
+                return true ;
+            }
+        }
+        return false ;
+    }
 
-            case QUEEN:
-                if( ( Math.abs( mv.destRow - mv.srcRow ) == Math
-                        .abs( mv.destCol - mv.srcCol ) )
-                        || ( ( mv.destCol == mv.srcCol ) || ( mv.destRow == mv.srcRow ) ) )
+    private boolean isValidMoveForKnight( ChessMove mv ) {
+        
+        if( Math.abs( mv.destRow - mv.srcRow ) == 1 ) { 
+            if( Math.abs( mv.destCol - mv.srcCol ) == 2 ) { 
+                return true ;
+            }
+        }
 
-                if( isPathClear( mv ) ) return true ;
+        if( Math.abs( mv.destCol - mv.srcCol ) == 1 ) { 
+            if( Math.abs( mv.destRow - mv.srcRow ) == 2 ) { 
+                return true ;
+            }
+        }
+        return false ;
+    }
 
-                break ;
+    private boolean isValidMoveForRook( ChessMove mv ) {
+        // Rook can only move in a straight line, hence first check if the
+        // source and destination cells line on the same line. If so, then
+        // the move is valid only if the path from source to destination
+        // is clear.
+        if( ( mv.destCol == mv.srcCol ) || 
+            ( mv.destRow == mv.srcRow ) ) {
+            
+            if( isPathClear( mv ) ) {
+                return true ;
+            }
+        }
+        return false ;
+    }
 
-            case KING:
-                if( ( Math.abs( mv.destCol - mv.srcCol ) == 1 )
-                        && ( Math.abs( mv.destRow - mv.srcRow ) <= 1 ) ) return true ;
-
-                if( ( Math.abs( mv.destRow - mv.srcRow ) == 1 )
-                        && ( Math.abs( mv.destCol - mv.srcCol ) <= 1 ) ) return true ;
-
-                break ;
-
-            case PAWN:
-                int factorForColor = ( mv.srcPieceColor == topColor ) ? 1 : -1 ;
-                int opponentColor = getEnemyPerspective( mv.srcPieceColor ) ;
-                int baseLine = ( factorForColor == 1 ) ? 1 : 6 ;
-
-                if( mv.destCol == mv.srcCol ) if( ( mv.destRow - mv.srcRow ) == ( factorForColor * 1 ) ) if( mv.destPiece == EMPTY ) return true ;
-
-                if( ( mv.destRow - mv.srcRow ) == ( factorForColor * 1 ) ) if( Math
-                        .abs( mv.destCol - mv.srcCol ) == 1 ) if( ( mv.destPiece != EMPTY )
-                        && ( mv.destPieceColor == opponentColor ) ) return true ;
-
-                if( mv.destCol == mv.srcCol ) if( ( mv.destRow - mv.srcRow ) == ( factorForColor * 2 ) ) if( mv.srcRow == baseLine ) if( mv.destPiece == EMPTY ) if( isPathClear( mv ) ) return true ;
-
-                break ;
+    private boolean isValidMoveForBishop( ChessMove mv ) {
+        // Bishop can only move diagonally, hence first check if the
+        // source and destination cells form a diagonal. If so, then
+        // the move is valid only if the path from source to destination
+        // is clear.
+        if( Math.abs( mv.destRow - mv.srcRow ) == 
+            Math.abs( mv.destCol - mv.srcCol ) ) {
+            
+            if( isPathClear( mv ) ) {
+                return true ;
+            }
         }
         return false ;
     }
 
     private boolean isPathClear( ChessMove mv ) {
+        
         if( mv.srcCol == mv.destCol ) {
             int minY = Math.min( mv.srcRow, mv.destRow ) ;
             int maxY = Math.max( mv.srcRow, mv.destRow ) ;
+            
             for( int i = minY + 1 ; i < maxY ; i++ ) {
                 ChessPosition pos = (ChessPosition) getPosition( i, mv.srcCol ) ;
                 if( pos.piece != EMPTY ) return false ;
@@ -511,18 +613,18 @@ public class ChessBoard extends GameBoard {
         if( mv.srcRow == mv.destRow ) {
             int minX = Math.min( mv.srcCol, mv.destCol ) ;
             int maxX = Math.max( mv.srcCol, mv.destCol ) ;
+            
             for( int i = minX + 1 ; i < maxX ; i++ ) {
                 ChessPosition pos = (ChessPosition) getPosition( mv.srcRow, i ) ;
                 if( pos.piece != EMPTY ) return false ;
             }
         }
 
-        if( Math.abs( mv.srcCol - mv.destCol ) == Math.abs( mv.srcRow
-                - mv.destRow ) ) {
-            int incrX = Math.abs( mv.destCol - mv.srcCol )
-                    / ( mv.destCol - mv.srcCol ) ;
-            int incrY = Math.abs( mv.destRow - mv.srcRow )
-                    / ( mv.destRow - mv.srcRow ) ;
+        if( Math.abs( mv.srcCol - mv.destCol ) == 
+            Math.abs( mv.srcRow - mv.destRow ) ) {
+            
+            int incrX = Math.abs( mv.destCol - mv.srcCol ) / ( mv.destCol - mv.srcCol ) ;
+            int incrY = Math.abs( mv.destRow - mv.srcRow ) / ( mv.destRow - mv.srcRow ) ;
 
             int x = mv.srcCol + incrX ;
             int y = mv.srcRow + incrY ;
@@ -543,13 +645,13 @@ public class ChessBoard extends GameBoard {
     public void printBoard() {
         for( int row = 0 ; row < 8 ; row++ ) {
             for( int col = 0 ; col < 8 ; col++ ) {
-                if( pieceLocations[BLACK][row][col] == 1 ) System.out
-                        .print( "B" ) ;
-                else if( pieceLocations[WHITE][row][col] == 1 ) System.out
-                        .print( "W" ) ;
-                else System.out.print( " " ) ;
+                if( pieceLocations[BLACK][row][col] == 1 ) 
+                    System.out.print( "B" ) ;
+                else if( pieceLocations[WHITE][row][col] == 1 ) 
+                    System.out.print( "W" ) ;
+                else 
+                    System.out.print( " " ) ;
             }
-
             System.out.println() ;
         }
     }
@@ -560,14 +662,15 @@ public class ChessBoard extends GameBoard {
     }
 
     private void initializeBoard( String initFile ) {
+        
         BufferedReader in = null ;
 
         try {
             in = new BufferedReader( new FileReader( initFile ) ) ;
             for( int row = 0 ; row < NUM_ROWS ; row++ ) {
+                
                 String tempString = in.readLine() ;
-                StringTokenizer tokenizer = new StringTokenizer( tempString,
-                        "|" ) ;
+                StringTokenizer tokenizer = new StringTokenizer( tempString, "|" ) ;
                 in.readLine() ;
 
                 for( int col = 0 ; col < NUM_COLS ; col++ ) {
@@ -579,8 +682,9 @@ public class ChessBoard extends GameBoard {
                             : ( color == 'w' ) ? WHITE : EMPTY ;
                     int piece = getPiece( pc ) ;
 
-                    positions[row][col] = new ChessPosition( piece, pieceColor,
-                            ( row + col ) % 2, row, col ) ;
+                    positions[row][col] = new ChessPosition( piece, pieceColor, 
+                                                             ( row + col ) % 2, 
+                                                             row, col ) ;
                     if( piece != EMPTY ) {
                         pieceLocations[pieceColor][row][col] = 1 ;
                     }

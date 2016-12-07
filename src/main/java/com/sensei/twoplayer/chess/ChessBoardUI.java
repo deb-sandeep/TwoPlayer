@@ -4,34 +4,34 @@ import java.awt.Graphics ;
 import java.awt.Point ;
 import java.awt.image.BufferedImage ;
 import java.io.InputStream ;
-import java.util.Hashtable ;
+import java.util.HashMap ;
+import java.util.Map ;
+
+import javax.imageio.ImageIO ;
 
 import com.sensei.twoplayer.core.Position ;
 import com.sensei.twoplayer.core.ui.GameBoardUI ;
-import com.sun.image.codec.jpeg.JPEGCodec ;
-import com.sun.image.codec.jpeg.JPEGImageDecoder ;
 
+@SuppressWarnings( "serial" )
 public class ChessBoardUI extends GameBoardUI {
-    private int       numRows          = 0 ;
-    private int       numCols          = 0 ;
+    
+    private int numRows = 0 ;
+    private int numCols = 0 ;
 
-    private Hashtable imageCache       = null ;
-
-    ChessPosition     selectedPosition = null ;
+    private Map<String, BufferedImage> imageCache = null ;
+    ChessPosition selectedPosition = null ;
 
     public ChessBoardUI( ChessBoard chessBoard ) {
         super( chessBoard ) ;
         numRows = chessBoard.getNumRows() ;
         numCols = chessBoard.getNumCols() ;
-        imageCache = new Hashtable() ;
+        imageCache = new HashMap<String, BufferedImage>() ;
     }
 
     private BufferedImage getPositionImage( ChessPosition cell ) {
+        
         BufferedImage retVal = null ;
-
-        StringBuffer buffer = new StringBuffer() ;
-
-        buffer.append( "/com/sensei/twoplayer/chess/images/" ) ;
+        StringBuffer buffer = new StringBuffer( "/com/sensei/twoplayer/chess/images/" ) ;
 
         if( cell.pieceColor == ChessBoard.BLACK ) {
             buffer.append( "Black" ) ;
@@ -79,15 +79,11 @@ public class ChessBoardUI extends GameBoardUI {
 
         buffer.append( ".jpg" ) ;
 
-        retVal = (BufferedImage) imageCache.get( buffer.toString() ) ;
+        retVal = ( BufferedImage )imageCache.get( buffer.toString() ) ;
         if( retVal == null ) {
             try {
-                // This means that the image has not been loaded.. load the
-                // image.
-                InputStream is = getClass().getResourceAsStream(
-                        buffer.toString() ) ;
-                JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder( is ) ;
-                retVal = decoder.decodeAsBufferedImage() ;
+                InputStream is = getClass().getResourceAsStream( buffer.toString() ) ;
+                retVal = ImageIO.read( is ) ;
 
                 imageCache.put( buffer.toString(), retVal ) ;
             }
@@ -112,6 +108,7 @@ public class ChessBoardUI extends GameBoardUI {
     }
 
     public void paint( Graphics g ) {
+        
         int height = getHeight() ;
         int width = getWidth() ;
 
@@ -120,19 +117,25 @@ public class ChessBoardUI extends GameBoardUI {
 
         for( int row = 0 ; row < numRows ; row++ ) {
             for( int col = 0 ; col < numCols ; col++ ) {
-                ChessPosition tempPosition = (ChessPosition) gameBoard
-                        .getPosition( row, col ) ;
+                
+                ChessPosition tempPosition = null ;
+                tempPosition = (ChessPosition) gameBoard .getPosition( row, col ) ;
                 BufferedImage image = getPositionImage( tempPosition ) ;
 
-                g.drawImage( image, col * cellWidth + 1, row * cellHeight + 1,
-                        cellWidth, cellHeight, null ) ;
+                g.drawImage( image, 
+                             col * cellWidth + 1, 
+                             row * cellHeight + 1,
+                             cellWidth, 
+                             cellHeight, 
+                             null ) ;
 
                 if( selectedPosition != null ) {
-                    if( selectedPosition.row == row
-                            && selectedPosition.col == col ) {
+                    if( selectedPosition.row == row && 
+                        selectedPosition.col == col ) {
                         g.draw3DRect( col * cellWidth + 5,
-                                row * cellHeight + 5, cellWidth - 10,
-                                cellHeight - 10, true ) ;
+                                      row * cellHeight + 5, 
+                                      cellWidth - 10,
+                                      cellHeight - 10, true ) ;
                     }
                 }
             }
@@ -140,6 +143,7 @@ public class ChessBoardUI extends GameBoardUI {
     }
 
     public void moveMade( com.sensei.twoplayer.core.Move move ) {
+        
         int height = getHeight() ;
         int width = getWidth() ;
 
@@ -148,20 +152,25 @@ public class ChessBoardUI extends GameBoardUI {
 
         ChessMove mv = (ChessMove) move ;
 
-        repaint( mv.srcCol * cellWidth + 1, mv.srcRow * cellHeight + 1,
-                cellWidth, cellHeight ) ;
-        repaint( mv.destCol * cellWidth + 1, mv.destRow * cellHeight + 1,
-                cellWidth, cellHeight ) ;
+        repaint( mv.srcCol * cellWidth + 1, 
+                 mv.srcRow * cellHeight + 1,
+                 cellWidth, cellHeight ) ;
+        
+        repaint( mv.destCol * cellWidth + 1, 
+                 mv.destRow * cellHeight + 1,
+                 cellWidth, cellHeight ) ;
     }
 
     public void repaintPosition( Position p ) {
+        
         int height = getHeight() ;
         int width = getWidth() ;
 
         int cellWidth = width / numCols ;
         int cellHeight = height / numRows ;
 
-        repaint( p.col * cellWidth + 1, p.row * cellHeight + 1, cellWidth,
-                cellHeight ) ;
+        repaint( p.col * cellWidth + 1, 
+                 p.row * cellHeight + 1, 
+                 cellWidth, cellHeight ) ;
     }
 }
