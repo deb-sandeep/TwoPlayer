@@ -228,8 +228,6 @@ public class ChessBoard extends GameBoard {
 
     private List<Move> getPossibleMoves( ChessPosition seedCell ) {
         
-        List<Move> possibleMoves = new ArrayList<Move>() ;
-
         int cellRow = seedCell.row ;
         int cellCol = seedCell.col ;
 
@@ -242,94 +240,131 @@ public class ChessBoard extends GameBoard {
         int[][] opponentLocation = pieceLocations[getEnemyPerspective( seedCell.pieceColor )] ;
 
         // If there is no piece in the cell, there are no moves.
-        if( seedCell.piece == EMPTY ) return possibleMoves ;
+        if( seedCell.piece == EMPTY ) return new ArrayList<Move>() ;
 
-        switch( seedCell.piece ){
-            case PAWN:
-                return getMovesForPawn( cellRow, cellCol,
-                                        yStepDir, 
-                                        ownLocation, opponentLocation ) ;
-            case KNIGHT:
-                return getMovesForKnight( cellRow, cellCol, ownLocation ) ;
-
-            case KING:
-                return getMovesForKing( cellRow, cellCol, ownLocation ) ;
-                
-            // Compute the possible moves if the piece at the seed cell location
-            // is a ROOK
-            case ROOK:
-            case BISHOP:
-            case QUEEN: {
-                boolean bForQueen = false ;
-                switch( seedCell.piece ){
-                    case QUEEN:
-                        bForQueen = true ;
-
-                    case ROOK: {
-                        int limit = 0 ;
-                        // Get the possible moves in the same row.
-                        for( int incr = -1 ; incr <= 1 ; incr += 2 ) {
-                            // The above is to toggle incr for the two loops,
-                            // once its -1 and then 1.
-                            limit = Math.max( -1, 8 * incr ) ;
-                            for( int col = cellCol + incr ; col != limit ; col += incr ) {
-                                if( ownLocation[cellRow][col] == 0 ) {
-                                    possibleMoves.add( getMove( cellRow, cellCol, cellRow, col ) ) ;
-                                    if( opponentLocation[cellRow][col] == 1 ) break ;
-                                }
-                                else break ;
-                            }
-                        }
-
-                        // Get the possible moves in the same column.
-                        for( int incr = -1 ; incr <= 1 ; incr += 2 ) {
-                            // The above is to toggle incr for the two loops,
-                            // once its -1 and then 1.
-                            limit = Math.max( -1, 8 * incr ) ;
-                            for( int row = cellRow + incr ; row != limit ; row += incr ) {
-                                if( ownLocation[row][cellCol] == 0 ) {
-                                    possibleMoves.add( getMove( cellRow, cellCol, row, cellCol ) ) ;
-                                    
-                                    if( opponentLocation[row][cellCol] == 1 ) break ;
-                                }
-                                else break ;
-                            }
-                        }
-                        if( !bForQueen ) break ;
-                    }
-
-                    case BISHOP: {
-                        for( int cIncr = -1 ; cIncr <= 1 ; cIncr += 2 ) {
-                            for( int rIncr = -1 ; rIncr <= 1 ; rIncr += 2 ) {
-                                int col = 0 ;
-                                int row = 0 ;
-
-                                int colLimit = ( cIncr < 0 ) ? cellCol
-                                        : ( 7 - cellCol ) ;
-                                int rowLimit = ( rIncr < 0 ) ? cellRow
-                                        : ( 7 - cellRow ) ;
-                                int numIter = Math.min( colLimit, rowLimit ) ;
-
-                                for( int i = 1 ; i <= numIter ; i++ ) {
-                                    col = cellCol + i * cIncr ;
-                                    row = cellRow + i * rIncr ;
-
-                                    if( ownLocation[row][col] == 0 ) {
-                                        possibleMoves.add( getMove( cellRow, cellCol, row, col ) ) ;
-                                        if( opponentLocation[row][col] == 1 ) break ;
-                                    }
-                                    else break ;
-                                }
-                            }
-                        }
-                    }
-                }
-                break ;
-            }
-
+        if( seedCell.piece == PAWN ) {
+            
+            return getMovesForPawn( cellRow, cellCol,
+                                    yStepDir, 
+                                    ownLocation, opponentLocation ) ;
+        }
+        else if( seedCell.piece == KNIGHT ) {
+            
+            return getMovesForKnight( cellRow, cellCol, ownLocation ) ;
+        }
+        else if( seedCell.piece == KING ) {
+            
+            return getMovesForKing( cellRow, cellCol, ownLocation ) ;
+        }
+        else if( seedCell.piece == ROOK ) {
+            
+            return getMovesForRook( cellRow, cellCol,
+                                    ownLocation, opponentLocation ) ;
+        }
+        else if( seedCell.piece == BISHOP ) {
+            
+            return getMovesForBishop( cellRow, cellCol,
+                                      ownLocation, opponentLocation ) ;
+        }
+        else if( seedCell.piece == QUEEN ) {
+            List<Move> moves = null ;
+            moves = getMovesForRook( cellRow, cellCol, 
+                                     ownLocation, opponentLocation ) ;
+            
+            moves.addAll( getMovesForBishop( cellRow, cellCol, 
+                                             ownLocation, 
+                                             opponentLocation ) ) ;
+            return moves ;
         }
 
-        return possibleMoves ;
+        return null ;
+    }
+
+    private List<Move> getMovesForBishop( int cellRow, int cellCol, 
+                                          int[][] ownLocation, 
+                                          int[][] opponentLocation ) {
+        
+        List<Move> moves = new ArrayList<Move>() ;
+        
+        for( int cIncr = -1 ; cIncr <= 1 ; cIncr += 2 ) {
+            for( int rIncr = -1 ; rIncr <= 1 ; rIncr += 2 ) {
+                int col = 0, row = 0 ;
+
+                int colLimit = ( cIncr < 0 ) ? cellCol : ( 7 - cellCol ) ;
+                int rowLimit = ( rIncr < 0 ) ? cellRow : ( 7 - cellRow ) ;
+                
+                int numIter = Math.min( colLimit, rowLimit ) ;
+
+                for( int i = 1 ; i <= numIter ; i++ ) {
+                    
+                    col = cellCol + i * cIncr ;
+                    row = cellRow + i * rIncr ;
+
+                    if( ownLocation[row][col] == 0 ) {
+                        moves.add( getMove( cellRow, cellCol, row, col ) ) ;
+                        if( opponentLocation[row][col] == 1 ) {
+                            break ;
+                        }
+                    }
+                    else {
+                        break ;
+                    }
+                }
+            }
+        }
+        
+        return moves ;
+    }
+
+    private List<Move> getMovesForRook( int cellRow, int cellCol, 
+                                        int[][] ownLocation, 
+                                        int[][] opponentLocation ) {
+        
+        List<Move> moves = new ArrayList<Move>() ;
+        
+        int limit = 0 ;
+        
+        // Get the possible moves in the same row. We scan the row in two parts
+        // once to the left (incr==-1) and once to the right (incr==1) of the
+        // current cell column.
+        for( int incr = -1 ; incr <= 1 ; incr += 2 ) {
+            
+            // If we are going towards decreasing column then the column limit is -1
+            // else, the column limit is 8
+            limit = Math.max( -1, 8*incr ) ;
+            
+            for( int col=cellCol+incr; col!=limit ; col+=incr ) {
+                if( ownLocation[cellRow][col] == 0 ) {
+                    
+                    moves.add( getMove( cellRow, cellCol, cellRow, col ) ) ;
+                    if( opponentLocation[cellRow][col] == 1 ) {
+                        break ;
+                    }
+                }
+                else {
+                    break ;
+                }
+            }
+        }
+
+        for( int incr = -1 ; incr <= 1 ; incr += 2 ) {
+            
+            limit = Math.max( -1, 8*incr ) ;
+            
+            for( int row = cellRow + incr ; row != limit ; row += incr ) {
+                if( ownLocation[row][cellCol] == 0 ) {
+                    
+                    moves.add( getMove( cellRow, cellCol, row, cellCol ) ) ;
+                    if( opponentLocation[row][cellCol] == 1 ) {
+                        break ;
+                    }
+                }
+                else {
+                    break ;
+                }
+            }
+        }
+        return moves ;
     }
 
     private List<Move> getMovesForKing( int cellRow, int cellCol, int[][] ownLocation ) {

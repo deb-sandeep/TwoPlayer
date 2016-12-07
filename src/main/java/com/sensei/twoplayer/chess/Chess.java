@@ -8,8 +8,8 @@ import java.awt.Frame ;
 import java.awt.Panel ;
 import java.awt.event.ActionEvent ;
 import java.awt.event.ActionListener ;
+import java.util.ArrayList ;
 import java.util.List ;
-import java.util.Vector ;
 
 import com.sensei.twoplayer.chess.strategy.CenterBoardCaptureStrategy ;
 import com.sensei.twoplayer.chess.strategy.EncroachmentStrategy ;
@@ -50,7 +50,7 @@ class ChessHumanPlayer extends com.sensei.twoplayer.core.HumanPlayer {
                 return ;
             }
             firstPosition = position ;
-            ( (ChessBoardUI) ui ).selectedPosition = firstPosition ;
+            ((ChessBoardUI)ui).selectedPosition = firstPosition ;
             firstMoveSelected = true ;
         }
         else {
@@ -71,11 +71,13 @@ class ChessHumanPlayer extends com.sensei.twoplayer.core.HumanPlayer {
 class ChessComputerPlayer extends ComputerPlayer {
     
     public ChessComputerPlayer( GameBoard gameBoard, int perspective,
-                                int maxDepth, List<EvaluationPolicy> policies ) {
+                                int maxDepth, 
+                                List<EvaluationPolicy> policies ) {
         super( gameBoard, perspective, maxDepth, policies ) ;
     }
 }
 
+@SuppressWarnings( "serial" )
 public class Chess extends Applet implements ActionListener {
     
     ChessBoard                  board            = null ;
@@ -83,7 +85,7 @@ public class Chess extends Applet implements ActionListener {
     Panel                       btnPanel         = null ;
     Frame                       applicationFrame = null ;
 
-    Vector                      policies         = null ;
+    List<EvaluationPolicy>      policies         = null ;
 
     Player                      computerPlayer   = null ;
     Player                      humanPlayer      = null ;
@@ -95,13 +97,12 @@ public class Chess extends Applet implements ActionListener {
     private static final String GAME_OVER        = "GameOver" ;
     private static final String NEW_GAME         = "NewGame" ;
 
-    public Chess() {
-    }
-
     public void actionPerformed( ActionEvent e ) {
+        
         String actionCommand = e.getActionCommand() ;
-
+        
         if( actionCommand.equals( NEW_GAME ) ) {
+            
             NewGameDialog dialog = new NewGameDialog( ui ) ;
             dialog.setModal( true ) ;
             dialog.setVisible( true ) ;
@@ -119,8 +120,9 @@ public class Chess extends Applet implements ActionListener {
     }
 
     private void startGame( int userColor, int difficulty ) {
-        int computerColor = ( userColor == ChessBoard.WHITE ) ? ChessBoard.BLACK
-                : ChessBoard.WHITE ;
+        
+        int computerColor = ( userColor == ChessBoard.WHITE ) ? 
+                            ChessBoard.BLACK : ChessBoard.WHITE ;
 
         if( runAsApplication ) {
             applicationFrame.remove( ui ) ;
@@ -134,7 +136,7 @@ public class Chess extends Applet implements ActionListener {
         ui = new ChessBoardUI( board ) ;
 
         computerPlayer = new ChessComputerPlayer( board, computerColor,
-                difficulty, policies ) ;
+                                                  difficulty, policies ) ;
         humanPlayer = new ChessHumanPlayer( board, userColor, ui ) ;
 
         if( !runAsApplication ) {
@@ -159,16 +161,17 @@ public class Chess extends Applet implements ActionListener {
     }
 
     public void init() {
-        // board = new ChessBoard( ChessBoard.BLACK,
-        // "F:\\Users\\Sandeep\\MyWorld\\apps_java\\chess\\init.txt" ) ;
+        
         board = new ChessBoard( ChessBoard.BLACK ) ;
         ui = new ChessBoardUI( board ) ;
 
         btnPanel = new Panel() ;
         btnPanel.setBackground( Color.gray.brighter() ) ;
+        
         Button gameOverBtn = new Button( "End game" ) ;
         gameOverBtn.addActionListener( this ) ;
         gameOverBtn.setActionCommand( GAME_OVER ) ;
+        
         Button newGameBtn = new Button( "New game" ) ;
         newGameBtn.addActionListener( this ) ;
         newGameBtn.setActionCommand( NEW_GAME ) ;
@@ -176,17 +179,18 @@ public class Chess extends Applet implements ActionListener {
         btnPanel.add( gameOverBtn ) ;
         btnPanel.add( newGameBtn ) ;
 
-        policies = new Vector() ;
-        policies.addElement( new MaterialStrategy( 100 ) ) ;
-        policies.addElement( new MobilityStrategy( 2 ) ) ;
-        policies.addElement( new EncroachmentStrategy( 6 ) ) ;
-        policies.addElement( new CenterBoardCaptureStrategy( 10 ) ) ;
+        policies = new ArrayList<EvaluationPolicy>() ;
+        policies.add( new MaterialStrategy( 100 ) ) ;
+        policies.add( new MobilityStrategy( 2 ) ) ;
+        policies.add( new EncroachmentStrategy( 6 ) ) ;
+        policies.add( new CenterBoardCaptureStrategy( 10 ) ) ;
 
         computerPlayer = new ChessComputerPlayer( board, ChessBoard.BLACK,
-                MAX_DEPTH, policies ) ;
+                                                  MAX_DEPTH, policies ) ;
         humanPlayer = new ChessHumanPlayer( board, ChessBoard.WHITE, ui ) ;
 
         if( !runAsApplication ) {
+            
             setLayout( new BorderLayout() ) ;
             add( ui, "Center" ) ;
             add( btnPanel, "South" ) ;
@@ -200,6 +204,7 @@ public class Chess extends Applet implements ActionListener {
     }
 
     public void startGameApplication() {
+        
         runAsApplication = true ;
         init() ;
         applicationFrame = new Frame() ;
