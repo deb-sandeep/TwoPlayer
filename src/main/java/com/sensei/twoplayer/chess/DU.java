@@ -1,13 +1,9 @@
-package com.sensei.twoplayer.chess;
+package com.sensei.twoplayer.chess ;
 
-
-// This is a debug utilities class... can be removed.
-public class DU
-{
-    public static String getPieceStr( int piece )
-    {
-        switch( piece )
-        {
+public class DU {
+    
+    public static String getPieceStr( int piece ) {
+        switch( piece ){
             case ChessBoard.PAWN:
                 return "Pawn" ;
             case ChessBoard.ROOK:
@@ -20,15 +16,13 @@ public class DU
                 return "Queen" ;
             case ChessBoard.KING:
                 return "King" ;
-        } ;
-        return "Empty" ;                
+        }
+        ;
+        return "Empty" ;
     }
-    
-    
-    public static char getPieceCh( int piece )
-    {
-        switch( piece )
-        {
+
+    public static char getPieceCh( int piece ) {
+        switch( piece ){
             case ChessBoard.PAWN:
                 return 'p' ;
             case ChessBoard.ROOK:
@@ -41,19 +35,16 @@ public class DU
                 return 'Q' ;
             case ChessBoard.KING:
                 return 'K' ;
-        } ;
-        return ' ' ;                
+        }
+        ;
+        return ' ' ;
     }
-    
-    
-    public static String getColor( int color )
-    {
-        if( color == ChessBoard.BLACK )
-        {
+
+    public static String getColor( int color ) {
+        if( color == ChessBoard.BLACK ) {
             return "Black" ;
         }
-        else
-        {
+        else {
             return "White" ;
         }
     }
