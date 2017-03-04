@@ -69,8 +69,8 @@ class DecisionEngine {
         Move bestMove = null ;
         List<Move> allMoves = null ;
 
-        double alpha = Double.MIN_VALUE ;
-        double beta = Double.MAX_VALUE ;
+        double alpha = Double.NEGATIVE_INFINITY ;
+        double beta = Double.POSITIVE_INFINITY ;
         double subTreeEval = 0 ;
 
         GameBoard scratchBoard = gameBoard.getScratchBoard() ;
