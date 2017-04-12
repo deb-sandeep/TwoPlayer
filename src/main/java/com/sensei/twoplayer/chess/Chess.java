@@ -209,9 +209,10 @@ public class Chess extends Applet implements ActionListener {
         init() ;
         applicationFrame = new Frame() ;
         applicationFrame.setLayout( new BorderLayout() ) ;
+        applicationFrame.setLocationRelativeTo( null );
         applicationFrame.add( ui, "Center" ) ;
         applicationFrame.add( btnPanel, "South" ) ;
-        applicationFrame.setSize( 400, 400 ) ;
+        applicationFrame.setSize( 750, 800 ) ;
         applicationFrame.addWindowListener( new java.awt.event.WindowAdapter() {
             public void windowClosing( java.awt.event.WindowEvent e ) {
                 System.exit( -1 ) ;
